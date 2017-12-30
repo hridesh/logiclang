@@ -1,0 +1,32 @@
+<?xml version="1.0" ?>
+<project name="lang" default="parser">
+
+	<!-- ANTLR version -->
+	<property name="antlr.version" value="4.5" />
+
+	<!-- LogicLang parser -->
+	<target name="logiclang-check-parser">
+		<condition property="logiclang.parser.uptodate">
+			<and>
+				<uptodate srcfile="src/logiclang/LogicLang.g" targetfile="src/logiclang/parser/LogicLangParser.java" />
+				<uptodate srcfile="src/logiclang/LogicLang.g" targetfile="src/logiclang/parser/LogicLangLexer.java" />
+				<uptodate srcfile="src/logiclang/LogicLang.g" targetfile="src/logiclang/parser/LogicLangListener.java" />
+			</and>
+		</condition>
+	</target>
+
+	<target name="logiclang" depends="logiclang-check-parser" unless="logiclang.parser.uptodate">
+		<java jar="lib/antlr-${antlr.version}-complete.jar" dir="src/logiclang/" fork="true" failonerror="true">
+			<arg value="-o" />
+			<arg value="parser/" />
+			<arg value="-no-listener" />
+			<arg value="-package" />
+			<arg value="logiclang.parser; import static logiclang.AST.*" />
+			<arg value="LogicLang.g" />
+		</java>
+	</target>
+
+	<target name="parser" depends="logiclang" >
+	</target>
+	
+</project>
