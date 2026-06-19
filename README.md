@@ -62,19 +62,3 @@ manual build-path or compiler settings needed:
 The Eclipse project files (`.classpath`, `.project`, `.settings/`) are also
 included for a plain Java-project import; they set the compiler to Java 17 to
 match the build.
-
-# Logic-programming features
-
-LogicLang adds a compact Prolog on top of the functions+lists base. Terms are
-atoms (constants), variables written `?x`, and compound terms `(functor arg …)`.
-
-- `(fact (parent abraham isaac))` — assert a fact into the knowledge base.
-- `(rule (grandparent ?x ?z) (parent ?x ?y) (parent ?y ?z))` — a rule: the head
-  holds whenever all of its goals hold.
-- `(query (grandparent abraham ?who))` — solve the goals by unification and
-  depth-first backtracking, printing every variable binding that satisfies them
-  (`?who = jacob`), one solution per line, or `no.` if there are none.
-
-Facts and rules populate the knowledge base the way `define`s populate the
-environment. See `src/logiclang/examples/` (`family.scm`, `ancestors.scm`). The
-ordinary functional expressions of the base language remain available.

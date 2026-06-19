@@ -1,8 +1,4 @@
-// A recursive rule in LogicLang: ancestor is the transitive closure of parent.
-//
-// Backtracking enumerates every solution. Run with:  run ancestors.scm
-//
-// Expected answers:  ?who = isaac, ?who = jacob, ?who = joseph
+/* Ancestor is the transitive closure of parent. */
 (fact (parent abraham isaac))
 (fact (parent isaac jacob))
 (fact (parent jacob joseph))

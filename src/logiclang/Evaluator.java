@@ -248,8 +248,6 @@ public class Evaluator implements Visitor<Value> {
 		}
 	}
 
-	// ----- Logic programming: knowledge base and resolution engine -----
-
 	private final java.util.List<RuleDecl> _kb = new java.util.ArrayList<RuleDecl>();
 	private int _freshId = 0; // used to rename clause variables apart
 

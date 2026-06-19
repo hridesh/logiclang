@@ -1,13 +1,5 @@
 grammar LogicLang;
 
-// LogicLang: a logic-programming language (a compact Prolog) layered on the
-// functions+lists base.
-//
-// Standalone grammar in the style of the other *Lang grammars (no imports).
-// In addition to the base expressions, LogicLang adds facts, rules, and queries
-// over terms (atoms, variables written ?x, and compound terms). Facts and rules
-// populate a knowledge base; a query is solved by unification and backtracking.
-
  program returns [Program ast]
  		locals [ArrayList<Exp> defs, Exp expr]
  		@init { $defs = new ArrayList<Exp>(); $expr = new UnitExp(); } :
@@ -28,7 +20,7 @@ grammar LogicLang;
  		')' { $ast = new DefineDecl($id.text, $e.ast); }
  		;
 
- // New declarations and query for LogicLang
+ // New Expressions for LogicLang
 
  factdecl returns [FactDecl ast] :
  		'(' Fact t=term ')' { $ast = new FactDecl($t.ast); }
@@ -82,7 +74,7 @@ grammar LogicLang;
         | call=callexp { $ast = $call.ast; }
         ;
 
- // Expressions inherited from the functions + lists base
+ // New Expressions for FuncLang
 
  lambdaexp returns [LambdaExp ast]
         locals [ArrayList<String> formals ]
@@ -129,6 +121,8 @@ grammar LogicLang;
  		')' { $ast = new GreaterExp($e1.ast,$e2.ast); }
  		;
 
+ // Expressions related to list
+
  carexp returns [CarExp ast] :
  		'(' Car
  		    e=exp
@@ -170,6 +164,8 @@ grammar LogicLang;
  		TrueLiteral { $ast = new BoolExp(true); }
  		| FalseLiteral { $ast = new BoolExp(false); }
  		;
+
+ // Other Standard Expressions
 
  numexp returns [NumExp ast]:
  		n0=Number { $ast = new NumExp(Integer.parseInt($n0.text)); }
@@ -228,6 +224,7 @@ grammar LogicLang;
  		;
 
  // Lexical Specification of this Programming Language
+ //  - lexical specification rules start with uppercase
 
  Define : 'define' ;
  Let : 'let' ;

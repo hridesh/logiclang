@@ -582,11 +582,13 @@ public interface AST {
 		}
 	}
 	
-	// ----- Logic programming: terms -----
-	// A term is an atom (constant), a variable (?x), or a compound/struct term
-	// (functor arg ...). Terms are unified by the resolution engine; they are
-	// not evaluated through the expression Visitor.
-
+	/**
+	 * A term is an atom, a variable (written ?x), or a compound term of the
+	 * form (functor arg ...). Terms are the data unified by the logic engine.
+	 *
+	 * @author hridesh
+	 *
+	 */
 	public static abstract class Term { }
 
 	public static class AtomTerm extends Term {
@@ -609,11 +611,13 @@ public interface AST {
 		public List<Term> args() { return _args; }
 	}
 
-	// ----- Logic programming: declarations and queries -----
-
 	/**
-	 * A fact declaration has the syntax  (fact term)
-	 * and asserts term into the knowledge base.
+	 * A fact declaration has the syntax
+	 *
+	 *  (fact term)
+	 *
+	 * @author hridesh
+	 *
 	 */
 	public static class FactDecl extends Exp {
 		private final Term _fact;
@@ -625,8 +629,12 @@ public interface AST {
 	}
 
 	/**
-	 * A rule declaration has the syntax  (rule head goal ...)
-	 * meaning head holds whenever all goals hold.
+	 * A rule declaration has the syntax
+	 *
+	 *  (rule head goal ...)
+	 *
+	 * @author hridesh
+	 *
 	 */
 	public static class RuleDecl extends Exp {
 		private final Term _head;
@@ -640,8 +648,12 @@ public interface AST {
 	}
 
 	/**
-	 * A query expression has the syntax  (query goal ...)
-	 * and yields every variable binding under which all goals hold.
+	 * A query expression has the syntax
+	 *
+	 *  (query goal ...)
+	 *
+	 * @author hridesh
+	 *
 	 */
 	public static class QueryExp extends Exp {
 		private final List<Term> _goals;

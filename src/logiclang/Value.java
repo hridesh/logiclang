@@ -89,7 +89,7 @@ public interface Value {
 		public DynamicError(String message) { this.message = message; }
 	    public String tostring() { return "" + message; }
 	}
-	static class SolutionsVal implements Value { // New in the logiclang: results of a query
+	static class SolutionsVal implements Value { //New in the logiclang
 		private final java.util.List<java.util.Map<String,String>> _solutions;
 		public SolutionsVal(java.util.List<java.util.Map<String,String>> solutions) { _solutions = solutions; }
 		public java.util.List<java.util.Map<String,String>> solutions() { return _solutions; }

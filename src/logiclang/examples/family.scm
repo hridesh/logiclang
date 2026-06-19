@@ -1,9 +1,4 @@
-// Family relationships in LogicLang.
-//
-// Facts and a rule populate a knowledge base; the query is answered by
-// unification and backtracking. Run with:  run family.scm
-//
-// Expected answer:  ?who = jacob   (abraham -> isaac -> jacob)
+/* Family relationships: who are abraham's grandchildren? */
 (fact (parent abraham isaac))
 (fact (parent isaac jacob))
 (fact (parent jacob joseph))
