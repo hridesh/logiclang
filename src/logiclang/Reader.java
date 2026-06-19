@@ -9,6 +9,7 @@ import logiclang.AST.Program;
 import logiclang.parser.LogicLangLexer;
 import logiclang.parser.LogicLangParser;
 
+@SuppressWarnings("deprecation")
 public class Reader {
 	
 	Program read() throws IOException {
