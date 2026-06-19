@@ -76,7 +76,7 @@ public class Evaluator implements Visitor<Value> {
 	@Override
 	public Value visit(Program p, Env env) {
 		try {
-			for(DefineDecl d: p.decls())
+			for(Exp d: p.decls())
 				d.accept(this, initEnv);
 			return (Value) p.e().accept(this, initEnv);
 		} catch (ClassCastException e) {
@@ -246,6 +246,129 @@ public class Evaluator implements Visitor<Value> {
 		} catch (IOException ex) {
 			return new DynamicError(ex.getMessage());
 		}
+	}
+
+	// ----- Logic programming: knowledge base and resolution engine -----
+
+	private final java.util.List<RuleDecl> _kb = new java.util.ArrayList<RuleDecl>();
+	private int _freshId = 0; // used to rename clause variables apart
+
+	@Override
+	public Value visit(FactDecl d, Env env) {
+		_kb.add(new RuleDecl(d.fact(), new java.util.ArrayList<Term>()));
+		return new UnitVal();
+	}
+
+	@Override
+	public Value visit(RuleDecl d, Env env) {
+		_kb.add(d);
+		return new UnitVal();
+	}
+
+	@Override
+	public Value visit(QueryExp e, Env env) {
+		java.util.List<Term> goals = e.goals();
+		java.util.LinkedHashSet<String> qvars = new java.util.LinkedHashSet<String>();
+		for (Term g : goals) collectVars(g, qvars);
+		java.util.List<java.util.Map<String,Term>> sols =
+			solve(new java.util.ArrayList<Term>(goals), new java.util.HashMap<String,Term>());
+		java.util.List<java.util.Map<String,String>> out =
+			new java.util.ArrayList<java.util.Map<String,String>>();
+		for (java.util.Map<String,Term> s : sols) {
+			java.util.Map<String,String> binding = new java.util.LinkedHashMap<String,String>();
+			for (String v : qvars)
+				binding.put(v, termToString(resolve(new VarTerm(v), s)));
+			out.add(binding);
+		}
+		return new SolutionsVal(out);
+	}
+
+	// SLD resolution: returns every substitution under which all goals hold.
+	private java.util.List<java.util.Map<String,Term>> solve(
+			java.util.List<Term> goals, java.util.Map<String,Term> s) {
+		java.util.List<java.util.Map<String,Term>> results =
+			new java.util.ArrayList<java.util.Map<String,Term>>();
+		if (goals.isEmpty()) { results.add(s); return results; }
+		Term goal = goals.get(0);
+		java.util.List<Term> rest = goals.subList(1, goals.size());
+		for (RuleDecl clause : _kb) {
+			int id = ++_freshId; // rename this clause's variables apart
+			Term head = rename(clause.head(), id);
+			java.util.Map<String,Term> s2 = new java.util.HashMap<String,Term>(s);
+			if (unify(goal, head, s2)) {
+				java.util.List<Term> newGoals = new java.util.ArrayList<Term>();
+				for (Term b : clause.body()) newGoals.add(rename(b, id));
+				newGoals.addAll(rest);
+				results.addAll(solve(newGoals, s2));
+			}
+		}
+		return results;
+	}
+
+	// Unify a and b, recording bindings in s (modified in place; backtracking
+	// callers pass a copy).
+	private boolean unify(Term a, Term b, java.util.Map<String,Term> s) {
+		a = walk(a, s); b = walk(b, s);
+		if (a instanceof VarTerm) { s.put(((VarTerm) a).name(), b); return true; }
+		if (b instanceof VarTerm) { s.put(((VarTerm) b).name(), a); return true; }
+		if (a instanceof AtomTerm && b instanceof AtomTerm)
+			return ((AtomTerm) a).name().equals(((AtomTerm) b).name());
+		if (a instanceof StructTerm && b instanceof StructTerm) {
+			StructTerm sa = (StructTerm) a, sb = (StructTerm) b;
+			if (!sa.functor().equals(sb.functor())) return false;
+			if (sa.args().size() != sb.args().size()) return false;
+			for (int i = 0; i < sa.args().size(); i++)
+				if (!unify(sa.args().get(i), sb.args().get(i), s)) return false;
+			return true;
+		}
+		return false;
+	}
+
+	// Follow variable bindings until a non-bound term is reached.
+	private Term walk(Term t, java.util.Map<String,Term> s) {
+		while (t instanceof VarTerm && s.containsKey(((VarTerm) t).name()))
+			t = s.get(((VarTerm) t).name());
+		return t;
+	}
+
+	// Fully apply the substitution to ground a term for display.
+	private Term resolve(Term t, java.util.Map<String,Term> s) {
+		t = walk(t, s);
+		if (t instanceof StructTerm) {
+			StructTerm st = (StructTerm) t;
+			java.util.List<Term> args = new java.util.ArrayList<Term>();
+			for (Term a : st.args()) args.add(resolve(a, s));
+			return new StructTerm(st.functor(), args);
+		}
+		return t;
+	}
+
+	// Rename every variable in t with a unique clause id, keeping a clause's
+	// variables apart from the goal's and from other uses of the same clause.
+	private Term rename(Term t, int id) {
+		if (t instanceof VarTerm) return new VarTerm(((VarTerm) t).name() + "#" + id);
+		if (t instanceof StructTerm) {
+			StructTerm st = (StructTerm) t;
+			java.util.List<Term> args = new java.util.ArrayList<Term>();
+			for (Term a : st.args()) args.add(rename(a, id));
+			return new StructTerm(st.functor(), args);
+		}
+		return t;
+	}
+
+	private void collectVars(Term t, java.util.Set<String> vars) {
+		if (t instanceof VarTerm) vars.add(((VarTerm) t).name());
+		else if (t instanceof StructTerm)
+			for (Term a : ((StructTerm) t).args()) collectVars(a, vars);
+	}
+
+	private String termToString(Term t) {
+		if (t instanceof VarTerm) return ((VarTerm) t).name();
+		if (t instanceof AtomTerm) return ((AtomTerm) t).name();
+		StructTerm st = (StructTerm) t;
+		StringBuilder sb = new StringBuilder("(").append(st.functor());
+		for (Term a : st.args()) sb.append(" ").append(termToString(a));
+		return sb.append(")").toString();
 	}
 
 	private Env initialEnv() {

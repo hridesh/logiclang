@@ -89,4 +89,26 @@ public interface Value {
 		public DynamicError(String message) { this.message = message; }
 	    public String tostring() { return "" + message; }
 	}
+	static class SolutionsVal implements Value { // New in the logiclang: results of a query
+		private final java.util.List<java.util.Map<String,String>> _solutions;
+		public SolutionsVal(java.util.List<java.util.Map<String,String>> solutions) { _solutions = solutions; }
+		public java.util.List<java.util.Map<String,String>> solutions() { return _solutions; }
+	    public String tostring() {
+			if (_solutions.isEmpty()) return "no.";
+			StringBuilder sb = new StringBuilder();
+			boolean firstSol = true;
+			for (java.util.Map<String,String> sol : _solutions) {
+				if (!firstSol) sb.append("\n");
+				firstSol = false;
+				if (sol.isEmpty()) { sb.append("yes."); continue; }
+				boolean firstBinding = true;
+				for (java.util.Map.Entry<String,String> b : sol.entrySet()) {
+					if (!firstBinding) sb.append(", ");
+					firstBinding = false;
+					sb.append(b.getKey()).append(" = ").append(b.getValue());
+				}
+			}
+			return sb.toString();
+	    }
+	}
 }

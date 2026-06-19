@@ -17,10 +17,11 @@ public interface AST {
 		public abstract Object accept(Visitor visitor, Env env);
 	}
 	public static class Program extends ASTNode {
-		List<DefineDecl> _decls;
+		List<Exp> _decls; // define declarations, facts, and rules
+
 		Exp _e;
 
-		public Program(List<DefineDecl>decls, Exp e) {
+		public Program(List<Exp>decls, Exp e) {
 			_decls = decls;
 			_e = e;
 		}
@@ -28,8 +29,8 @@ public interface AST {
 		public Exp e() {
 			return _e;
 		}
-		
-		public List<DefineDecl> decls() {
+
+		public List<Exp> decls() {
 			return _decls;
 		}
 		
@@ -581,6 +582,76 @@ public interface AST {
 		}
 	}
 	
+	// ----- Logic programming: terms -----
+	// A term is an atom (constant), a variable (?x), or a compound/struct term
+	// (functor arg ...). Terms are unified by the resolution engine; they are
+	// not evaluated through the expression Visitor.
+
+	public static abstract class Term { }
+
+	public static class AtomTerm extends Term {
+		private final String _name;
+		public AtomTerm(String name){ _name = name; }
+		public String name() { return _name; }
+	}
+
+	public static class VarTerm extends Term {
+		private final String _name;
+		public VarTerm(String name){ _name = name; }
+		public String name() { return _name; }
+	}
+
+	public static class StructTerm extends Term {
+		private final String _functor;
+		private final List<Term> _args;
+		public StructTerm(String functor, List<Term> args){ _functor = functor; _args = args; }
+		public String functor() { return _functor; }
+		public List<Term> args() { return _args; }
+	}
+
+	// ----- Logic programming: declarations and queries -----
+
+	/**
+	 * A fact declaration has the syntax  (fact term)
+	 * and asserts term into the knowledge base.
+	 */
+	public static class FactDecl extends Exp {
+		private final Term _fact;
+		public FactDecl(Term fact){ _fact = fact; }
+		public Term fact() { return _fact; }
+		public Object accept(Visitor visitor, Env env) {
+			return visitor.visit(this, env);
+		}
+	}
+
+	/**
+	 * A rule declaration has the syntax  (rule head goal ...)
+	 * meaning head holds whenever all goals hold.
+	 */
+	public static class RuleDecl extends Exp {
+		private final Term _head;
+		private final List<Term> _body;
+		public RuleDecl(Term head, List<Term> body){ _head = head; _body = body; }
+		public Term head() { return _head; }
+		public List<Term> body() { return _body; }
+		public Object accept(Visitor visitor, Env env) {
+			return visitor.visit(this, env);
+		}
+	}
+
+	/**
+	 * A query expression has the syntax  (query goal ...)
+	 * and yields every variable binding under which all goals hold.
+	 */
+	public static class QueryExp extends Exp {
+		private final List<Term> _goals;
+		public QueryExp(List<Term> goals){ _goals = goals; }
+		public List<Term> goals() { return _goals; }
+		public Object accept(Visitor visitor, Env env) {
+			return visitor.visit(this, env);
+		}
+	}
+
 	public interface Visitor <T> {
 		// This interface should contain a signature for each concrete AST node.
 		public T visit(AST.AddExp e, Env env);
@@ -608,5 +679,8 @@ public interface AST {
 		public T visit(AST.ConsExp e, Env env); // Additional expressions for convenience
 		public T visit(AST.ListExp e, Env env); // Additional expressions for convenience
 		public T visit(AST.NullExp e, Env env); // Additional expressions for convenience
-	}	
+		public T visit(AST.FactDecl d, Env env); // New for the logiclang
+		public T visit(AST.RuleDecl d, Env env); // New for the logiclang
+		public T visit(AST.QueryExp e, Env env); // New for the logiclang
+	}
 }

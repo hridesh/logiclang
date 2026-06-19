@@ -175,6 +175,31 @@ public class Printer {
 			result += e.arg().accept(this, env);
 			return result + ")";
 		}
+
+		public String visit(AST.FactDecl d, Env env) {
+			return "(fact " + term(d.fact()) + ")";
+		}
+
+		public String visit(AST.RuleDecl d, Env env) {
+			StringBuilder sb = new StringBuilder("(rule ").append(term(d.head()));
+			for (AST.Term g : d.body()) sb.append(" ").append(term(g));
+			return sb.append(")").toString();
+		}
+
+		public String visit(AST.QueryExp e, Env env) {
+			StringBuilder sb = new StringBuilder("(query");
+			for (AST.Term g : e.goals()) sb.append(" ").append(term(g));
+			return sb.append(")").toString();
+		}
+
+		private static String term(AST.Term t) {
+			if (t instanceof AST.VarTerm) return ((AST.VarTerm) t).name();
+			if (t instanceof AST.AtomTerm) return ((AST.AtomTerm) t).name();
+			AST.StructTerm st = (AST.StructTerm) t;
+			StringBuilder sb = new StringBuilder("(").append(st.functor());
+			for (AST.Term a : st.args()) sb.append(" ").append(term(a));
+			return sb.append(")").toString();
+		}
 		
 	}
 }
